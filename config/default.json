@@ -2,5 +2,13 @@
     "server":{
         "host":"localhost",
         "port":3000
-    }
+    },
+    "mysql":{
+        "host":"localhost",
+        "port":3306,
+        "database":"todoweb",
+        "user":"nghia",
+        "password":"20102001ntns"
+    },
+    "salt":10
 }
