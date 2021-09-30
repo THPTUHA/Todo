@@ -17,6 +17,18 @@ function addUser(user){
     return false;
 }
 
+function getUserByEmail(email){
+    var defer=q.defer();
+    var query=connection.query("SELECT * FROM users WHERE ?", {email:email},function(err,result){
+        if(err)defer.reject(err);
+        else {
+            defer.resolve(result);
+        }
+    });
+    return defer.promise;
+}
+
 module.exports={
-    addUser:addUser
+    addUser:addUser,
+    getUserByEmail:getUserByEmail
 }

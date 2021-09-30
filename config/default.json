@@ -10,5 +10,6 @@
         "user":"nghia",
         "password":"20102001ntns"
     },
-    "salt":10
+    "salt":10,
+    "secret_key":"secretkey"
 }
