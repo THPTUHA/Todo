@@ -3,93 +3,33 @@ var router=express.Router();
 var user_md=require("../models/user");
 var post_md=require("../models/posts");
 
-var helper=require("../helpers/helper");
 
 
 router.get("/",function(req,res){
-    var data=post_md.getAllPosts();
-    data.then(function(posts){
-        var post={
-            posts:posts,
-            error:false
-        };
-        res.render("admin/dashboard",{data:post});
-    }).catch(function(error){
-        res.render("admin/dashboard",{data:"Get posts data fault"});
-    });
-});
-
-router.get("/signup",function(req,res){
-    res.render("signup",{data:{}});
-});
-
-router.post("/signup",function(req,res){
-    var user=req.body;
-    if(user.email.trim().length==0){
-        res.render("signup",{data:{error:"Email is required"}});
-    }
-    if(user.password.trim().length==0){
-        res.render("signup",{data:{error:"Password is required"}});
-    }
-    if(user.password.trim()!=user.repassword.trim()){
-        res.render("signup",{data:{error:"Password is not match"}});
-    }
-    if(user.firstname.trim().length==0){
-        res.render("signup",{data:{error:"Please enter firstname"}});
-    }
-    if(user.lastname.trim().length==0){
-        res.render("signup",{data:{error:"Please enter lastname"}});
-    }
-    var password=helper.hash_password(user.password);
-    console.log(password);
-    user={
-        email:user.email,
-        password:password,
-        first_name:user.firstname,
-        last_name:user.lastname
-    };
-    var result=user_md.addUser(user);
-
-    result.then(function(data){
-        // res.redirect("/admin/signin");
-    }).catch(function(err){
-        console.log(err);
-        res.render("signup",{data:{error:"error"}});
-    })
-});
-
-router.get("/signin",function(req,res){
-    res.render("signin",{data:{}});
-});
-
-router.post("/signin",function(req,res){
-    var params=req.body;
-    if(params.email.trim().length==0){
-        res.render("signin",{data:{error:"Please enter an email"}});
-    }
-    if(params.password.trim().length==0){
-        res.render("signin",{data:{error:"Please enter an password"}});
-    }
-    var data=user_md.getUserByEmail(params.email);
-    if(data){
-        data.then(function(users){
-            var user=users[0];
-            var status=helper.compare(params.password,user.password);
-            if(status){
-                req.session.user=user;
-                console.log(req.session.user);
-                res.redirect("/admin");
-            }else{
-                res.render("signin",{data:{error:"Password is Wrong"}});
-            }
-        })
+    if(req.session.user){
+        var data=post_md.getAllPosts();
+        data.then(function(posts){
+            var post={
+                posts:posts,
+                error:false
+            };
+            res.render("admin/dashboard",{data:post});
+        }).catch(function(error){
+            res.render("admin/dashboard",{data:"Get posts data fault"});
+        });
     }else{
-        res.render("signin",{data:{error:"Email not exists"}});
+        res.redirect("/signin");
     }
 });
+
 
 router.get("/post/new",function(req,res){
-    res.render("admin/post/new",{data:""});
+    if(req.session.user){
+        res.render("admin/post/new",{data:""});
+    }else{
+        res.redirect("/signin");
+    }
+    
 });
 
 router.post("/post/new",function(req,res){
@@ -110,10 +50,78 @@ router.post("/post/new",function(req,res){
             var data={
                 error:"Could not insert post"
             };
-            res.render("admin/post/new",{data:data});
+            res.render("post/new",{data:data});
         })
     }
 });
 
+router.get("/post/edit/:id",function(req,res){
+    if(req.session.user){
+        var params=req.params;
+        var id=params.id;
+        var data=post_md.getPostById(id);
+        data.then(function(posts){
+            var post=posts[0];
+            var data={
+                post:post,
+                error:false
+            }
+            res.render("admin/post/edit",{data:data});
+        }).catch(function(error){
+            var data={
+                error:"Could not edit post!"
+            }
+            res.render("admin/post/edit",{data:data});
+        })
+    }else{
+        res.redirect("/signin");
+    }
+    
+});
+
+router.put("/post/edit",function(req,res){
+    var params=req.body;
+    var data=post_md.updatePost(params);
+    if(data){
+        data.then(function(result){
+            res.json({status_code:200});
+        }).catch(function(error){
+            res.json({status_code:500});
+        });
+    }else{
+        res.json({status_code:500});
+    }
+});
+
+router.delete("/post/delete",function(req,res){
+    var post_id=req.body.id;
+    var data=post_md.deletePost(post_id);
+    if(data){
+        data.then(function(result){
+            res.json({status_code:200});
+        }).catch(function(error){
+            res.json({status_code:500});
+        })
+    }else{
+        res.json({status_code:500});
+    }
+});
+
+router.get("/user",function(req,res){
+    if(req.session.user){
+        var data=user_md.getAllUsers();
+        data.then(function(users){
+            var data={
+                users:users
+            }
+            res.render("admin/user",{data:data});
+        }).catch(function(error){
+            var data={error:"Could not get users"};
+            res.render("admin/user",{data:data});
+        });
+    }else{
+        res.redirect("/signin");
+    }
+});
 
 module.exports=router;

@@ -44,8 +44,8 @@
                                         <th><%=data.posts[i].created_at%></th>
                                         <th><%=data.posts[i].update_at%></th>
                                         <th>
-                                            <a href="" class="btn btn-primary">Edit</a>
-                                            <a href="" class="btn btn-danger">Delete</a>
+                                            <a href="/admin/post/edit/<%=data.posts[i].id%>" class="btn btn-primary">Edit</a>
+                                            <button class="btn btn-danger post_delete" post_id="<%=data.posts[i].id%>" >Delete</button>
                                         </th>
                                     </tr>
                                 <%}%>
@@ -57,6 +57,8 @@
                 </div>
             </div>
         </div>
+        
     </div>
+    <script type="text/javascript"src="/static/js/post.js"></script>
 </body>
 </html>
