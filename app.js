@@ -4,6 +4,8 @@ var bodyParser=require('body-parser');
 var path=require('path');
 var session =require('express-session');
 
+var soketio=require("socket.io");
+
 var app=express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended:true}));
@@ -25,7 +27,9 @@ app.use(controllers);
 app.use('/static',express.static(path.join(__dirname, 'public')));
 
 var host=config.get("server.host");
-var port=config.get("server.port");
-app.listen(port,host,function(){
+var port=process.env.PORT||3000;
+var server=app.listen(port,host,function(){
   console.log("Running");
 });
+
+var id=soketio(server);
