@@ -1,0 +1,8 @@
+create table if not exists tasks(
+	id int auto_increment key,
+    name text,
+    description  text,
+    last_update int,
+    user_id int,
+    status int
+);

@@ -4,7 +4,8 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon app.js"
   },
   "author": "Nghia",
   "license": "ISC",
@@ -15,7 +16,12 @@
     "ejs": "^3.1.6",
     "express": "~4.17.1",
     "express-session": "^1.17.2",
+    "jsonwebtoken": "^8.5.1",
     "mysql": "^2.18.1",
-    "q": "^1.5.1"
+    "q": "^1.5.1",
+    "socket.io": "^4.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.13"
   }
 }

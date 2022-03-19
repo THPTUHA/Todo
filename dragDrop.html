@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .container {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+        }
+
+        .box {
+        border: 3px solid #666;
+        background-color: #ddd;
+        border-radius: .5em;
+        padding: 10px;
+        cursor: move;
+        }
+        .box.over {
+        border: 3px dotted #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div draggable="true" class="box">
+            <div>A</div>
+        </div>
+        <div draggable="true" class="box">
+            <div>B</div>
+        </div>
+        <div draggable="true" class="box">
+            <div>C</div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            function handleDragStart(e) {
+            this.style.opacity = '0.4';
+            console.log(this);
+            dragSrcEl = this;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+            }
+
+            function handleDragEnd(e) {
+                this.style.opacity = '1';
+            }
+
+            function handleDragOver(e) {
+                if (e.preventDefault) {
+                e.preventDefault();
+                }
+                return false;
+            }
+
+            function handleDragEnter(e) {
+                this.classList.add('over');
+            }
+
+            function handleDragLeave(e) {
+                this.classList.remove('over');
+            }
+
+            function handleDrop(e) {
+            e.stopPropagation(); // stops the browser from redirecting.
+            this.classList.remove('over');
+            if (dragSrcEl !== this) {
+                dragSrcEl.innerHTML = this.innerHTML;
+                this.innerHTML = e.dataTransfer.getData('text/html');
+            }
+            return false;
+            }
+
+            let items = document.querySelectorAll('.container .box');
+            items.forEach(function(item) {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('dragenter', handleDragEnter);
+                item.addEventListener('dragleave', handleDragLeave);
+                item.addEventListener('drop', handleDrop);
+            });
+        })
+    </script>
+</body>
+</html>

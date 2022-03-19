@@ -1,190 +1,111 @@
+class ToDoList{
+    task_edit;
+    constructor(){
+        this.button_add_task = $("#add_task");
+        this.task_form = $("#task_form");
+        this.button_save_task = $("#save_task");
+        this.task_form_name = $("#task_form_name");
+        this.task_form_content = $("#task_form_content");
+        this.tasks = $("#tasks");
+    }
 
-var check_status=false;
-var edit_staus=false;
-var id_task="";
-var base_url=location.protocol+"//"+document.domain+":"+location.port;
-var len=$(".task").length;
+    add(task){
+        const col_1 = $("<th></th>").append(
+            $("<input/>",{class:"form-check-input done", type : "checkbox"})
+        )
+        const col_2 = $("<th></th>").append(
+            $("<input>",{class:"form-check-input failure", type : "checkbox"})
+        )
+        const col_3 = $("<th></th>",{class:"title_task"}).text(task.name);
+        const col_4 =  $("<th></th>",{class:"content_task"}).text(task.content);
+        const col_5 = $("<th></th>").append(
+            $("<button>",{class:"btn btn-primary edit"}).text("Edit"),
+            $("<button>",{class:"btn btn-danger delete"}).text("Delete"),
+        )
+        this.tasks.append($("<tr>",{class: "task", id:task.id}).append(col_1,col_2,col_3,col_4,col_5));
+    }
 
-function done(id_task,check){
-    $.ajax({
-        url:base_url+"/user/edit/done",
-        type:"PUT",
-        data:{id_task:id_task,done:check},
-        dataType:"json",
-        success:function(res){
-        }
-    });
-}
+    openTaskForm(){
+        this.task_form.show();
+        this.button_add_task.hide();
+    }
 
-function failure(id_task,check){
-    $.ajax({
-        url:base_url+"/user/edit/failure",
-        type:"PUT",
-        data:{id_task:id_task,failure:check},
-        dataType:"json",
-        success:function(res){
-        }
-    });
-}
+    closeTaskForm(){
+        this.task_form.hide();
+        this.button_add_task.show();
+    }
 
-function deleteTask(id_task){
-    $.ajax({
-        url:base_url+"/user/delete",
-        type:"DELETE",
-        data:{id_task:id_task},
-        dataType:"json",
-        success:function(res){
-        }
-    });
-}
-
-function action(){
-    $(".tbody").sortable({
-        stop:function(){
-          var tmp=[];
-          var index=0;
-           $(".task").each(function(){
-              tmp.push({pos:index++,id_task:$(this).attr("id_task")});
-           })
-           $.ajax({
-                url:base_url+"/user/sortTasks",
-                type:"PUT",
-                data:{mp:tmp},
-                dataType:"json",
-                success:function(res){
-                }
-           })
-        }
-    });
-    $(".delete").each(function(){
-        $(this).click(function(){
-            $(this).parent().parent().remove();
+    update(id){
+        $.post("/user/tasks/update",{id: id},(data)=>{
+            if(data.status_code == 200){
+                content.innerText = this.task_form_content.val();
+                name.innerText = this.task_form_name.val();
+                
+            }
         })
-    });
-
-    $(".edit").each(function(){
-            $(this).click(function(){
-                if(!check_status){
-                    id_task=$(this).attr("id_task");
-                    var parent=$(this).parent().parent();
-                    $(".title").val(parent.children(".title_task").text());
-                    $(".content").val(parent.children(".content_task").text());
-                    $(".add_form").attr("style",""); 
-                    parent.remove();
-                    check_status=true;edit_staus=true;
-                }
-            })
-    });
-
-    $(".delete").click(function(){
-        var id_task=$(this).attr("id_task");
-        deleteTask(id_task);
-    });
-
-    $(".done").click(function(){
-        var check=1-$(this).attr("check");
-        var id_task=$(this).attr("id_task");
-        done(id_task,check);
-    });
-
-    $(".failure").click(function(){
-        var check=1-$(this).attr("check");
-        var id_task=$(this).attr("id_task");
-        failure(id_task,check);
-    });
-
-}
+    }
 
 
-function Add(){
-    $(".add_task").click(function(){
-        check_status=true;
-       $(".add_form").attr("style",""); 
-    });
+    modify(){
+        this.tasks.click((e)=>{
+            if(e.target.classList.contains("delete")){
+                const task = e.target.parentElement.parentElement;
+                $.post("/user/tasks/delete",{id:task.id},(data)=>{
+                    if(data.status_code == 200){
+                        task.remove();
+                    }
+                })
+            }
 
-    $(".save_form").click(function(){
-        $(".add_form").attr("style","display:none;"); 
-        var boxDone=$("<th></th>").append($("<input>").attr("type","checkbox").addClass("form-check-input"));
-        var boxFailure=$("<th></th>").append($("<input>").attr("type","checkbox").addClass("form-check-input"));
-        if(!boxDone.attr("check"))boxDone.attr("check",0);
-        if(!boxFailure.attr("check"))boxFailure.attr("check",0);
-        var newContent=$(".content").val();
-        var newTitle=$(".title").val();
-        var title=$("<th></th>").text(newTitle).addClass("title_task");  $(".title").val("");
-        var content=$("<th></th>").text(newContent).addClass("content_task");$(".content").val("");
-        var edit=$("<button>Edit</button>").addClass("btn btn-primary edit");
-        var del=$("<button>Delete</button>").addClass("btn btn-danger delete");
-        var action=$("<th></th>").append(edit,del);
-        var task=$("<tr></tr>").addClass("task").append(boxDone,boxFailure,title,content,action);
-        $(".tbody").append(task);
-        $(".delete").each(function(){
-            $(this).click(function(){
-                $(this).parent().parent().remove();
-            })
+            if(e.target.classList.contains("edit")){
+                this.task_edit =  e.target.parentElement.parentElement;
+                const content = this.task_edit.childNodes[7];
+                const name = this.task_edit.childNodes[5];
+                this.task_form_name.val(name.innerText);
+                this.task_form_content.val(content.innerText);
+                this.openTaskForm();
+            }
+        })
+
+        this.button_save_task.click(()=>{
+            const data = {
+                name: this.task_form_name.val(),
+                content: this.task_form_content.val()
+            }
+
+            if(this.task_edit){
+                data.id = this.task_edit.id;
+                $.post("/user/tasks/update",data,(data)=>{
+                    if(data.status_code == 200){
+                        this.task_edit.childNodes[7].innerText = this.task_form_content.val();
+                        this.task_edit.childNodes[5].innerText = this.task_form_name.val();
+                        this.task_edit = undefined;
+                        this.closeTaskForm();
+                    }
+                })
+
+            }else{
+                $.post("/user/tasks/add",data,(data)=>{
+                    if(data.status_code == 200){
+                        this.add(data.task);
+                        this.button_add_task.show();
+                        this.closeTaskForm();
+                    }
+                })
+            }
+        })
+    }
+
+    init(){
+        this.button_add_task.click(()=>{
+            this.openTaskForm();
         });
-        if(edit_staus){
-            $.ajax({
-                url:base_url+"/user/edit/task",
-                type:"PUT",
-                data:{id_task:id_task,title:newTitle,content:newContent},
-                dataType:"json",
-                success:function(res){
-                }
-            });
-            edit_staus=false;check_status=false;
-        }else{ 
-            len++;
-            $.ajax({
-                url:base_url+"/user/add/task",
-                type:"POST",
-                data:{title:newTitle,content:newContent,position:len},
-                dataType:"json",
-                success:function(res){
-                    boxDone.attr("id_task",res.id_task);
-                    boxFailure.attr("id_task",res.id_task);
-                    del.attr("id_task",res.id_task);
-                    task.attr("id_task",res.id_task);
-                    check_status=false;
-                }
-            });
-            boxDone.click(function(){
-                var check=1-$(this).attr("check");
-                var id_task=$(this).attr("id_task");
-                done(id_task,check);
-            });
-            boxFailure.click(function(){
-                var check=1-$(this).attr("check");
-                var id_task=$(this).attr("id_task");
-                failure(id_task,check);
-            });
 
-            del.click(function(){
-                var id_task=$(this).attr("id_task");
-                 deleteTask(id_task)
-            });
-
-            $(".tbody").sortable({
-                stop:function(){
-                  var tmp=[];
-                  var index=0;
-                   $(".task").each(function(){
-                      tmp.push({pos:index++,id_task:$(this).attr("id_task")});
-                   })
-                   $.ajax({
-                        url:base_url+"/user/sortTasks",
-                        type:"PUT",
-                        data:{mp:tmp},
-                        dataType:"json",
-                        success:function(res){
-                        }
-                   })
-                }
-            });
-        }
-    });
-    action();
+        this.modify();
+    }
 }
-
 $(document).ready(function(){
-    new Add();
+   const todo = new ToDoList();
+   todo.init();
 });
+

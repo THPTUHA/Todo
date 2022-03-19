@@ -1,92 +1,8 @@
 var q=require("q");
 var db=require("../common/database");
 var connection=db.getConnection();
-
-function getAllTasks(email){
-    var defer=q.defer();
-    connection.query("SELECT * FROM "+email,function(err,result){
-        if(err)defer.reject(err);
-        else {
-            defer.resolve(result);
-        }
-    });
-    return defer.promise;
-}
-
-function deleteTask(id_task,email){
-    var defer=q.defer();
-    connection.query("DELETE FROM "+email+" WHERE id_task=?",[id_task],function(err,result){
-        if(err)defer.reject(err);
-        else {
-            defer.resolve(result);
-        }
-    });
-    return defer.promise;
-}
-
-function updateTaskDone(email,params){
-    if(params){
-        var defer=q.defer();
-        connection.query("UPDATE "+email+" SET done=? ,updated_at=? WHERE id_task=?",
-        [params.done,new Date(),params.id_task],function(err,result){
-            if(err){
-                defer.reject(err);
-            }else{
-                defer.resolve(result);
-            }
-        });
-        return defer.promise;
-    }
-    return false;
-}
-
-function updateTaskFailure(email,params){
-    if(params){
-        var defer=q.defer();
-        connection.query("UPDATE "+email+" SET failure=? ,updated_at=? WHERE id_task=?",
-        [params.failure,new Date(),params.id_task],function(err,result){
-            if(err){
-                defer.reject(err);
-            }else{
-                defer.resolve(result);
-            }
-        });
-        return defer.promise;
-    }
-    return false;
-}
-
-function updateTask(email,params){
-    if(params){
-        var defer=q.defer();
-        connection.query("UPDATE "+email+" SET title=?, content=?,updated_at=? WHERE id_task=?",
-        [params.title,params.content,new Date(),params.id_task],function(err,result){
-            if(err){
-                defer.reject(err);
-            }else{
-                defer.resolve(result);
-            }
-        });
-        return defer.promise;
-    }
-    return false;
-}
-
-function addTask(email,params){
-    if(params){
-        var defer=q.defer();
-        connection.query("INSERT INTO "+email+" SET id_task=?,title=?, content=?,done=?, failure=?,created_at=?,position=? ",
-        [params.id_task,params.title,params.content,0,0,new Date(),params.position],function(err,result){
-            if(err){
-                defer.reject(err);
-            }else{
-                defer.resolve(result);
-            }
-        });
-        return defer.promise;
-    }
-    return false;
-}
+const mysql=require("mysql");
+const { promiseQuery } = require("../helpers/helper");
 
 function updatePosition(email,params){
     if(params){
@@ -106,12 +22,28 @@ function updatePosition(email,params){
     return false;
 }
 
+class Task{
+    static get(option,limit){
+        const query = mysql.format(`SELECT * FROM tasks WHERE ? ${limit && limit.limit ? "LIMIT " + limit.limit:""}`, option);
+        return promiseQuery(query);
+    }
+
+    static add(option){
+        const query = mysql.format(`INSERT INTO tasks SET ?`, option);
+        return promiseQuery(query);
+    }
+
+    static delete(option){
+        const query = mysql.format(`DELETE FROM tasks WHERE ?`,option);
+        return promiseQuery(query);
+    }
+
+    static update(options){
+        const query = mysql.format(`UPDATE tasks SET ? WHERE ?`,options);
+        return promiseQuery(query);
+    }
+
+}
 module.exports={
-    getAllTasks:getAllTasks,
-    deleteTask:deleteTask,
-    updateTaskDone:updateTaskDone,
-    updateTaskFailure:updateTaskFailure,
-    updateTask:updateTask,
-    addTask:addTask,
-    updatePosition:updatePosition
+    Task: Task
 }

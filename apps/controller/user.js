@@ -1,94 +1,103 @@
 const e = require("express");
 var express=require("express");
+const { Task } = require("../models/task");
 var router=express.Router();
 var task_md=require("../models/task");
-var id_task=0;
-var email="";
+const user = require("../models/user");
 
-router.get("/profile/:email",function(req,res){
-    email=req.params.email;
-    var len=email.length;
-    email=email.substring(0,len-10);
-    var data=task_md.getAllTasks(email);
-    data.then(function(tasks){
-        var len=tasks.length;
-        tasks.email=email;
-        if(len){
-            id_task=tasks[len-1].id_task;
-            var mp=[];
-            for(var i=0;i<len;++i)mp.push({pos:tasks[i].position,num:i});
-            mp.sort((a,b)=>{return a.pos-b.pos;});
-             console.log(mp);
+
+const page_size = 10;
+
+router.get("/profile/:id",function(req,res){
+    const user = req.session.user;
+    if(user){
+        id = req.params.id;
+        Task.get({user_id: user.id},{limit: page_size}).then((tasks)=>{
+            res.render("todoUser/index",{data: {tasks: tasks}});
+        }).catch((error)=>{
+            console.log(error);
+            res.render("todoUser/index",{error: error});
+        })
+    }else{
+        res.redirect("/signin");
+    }
+   
+});
+
+
+router.post("/tasks/delete",function(req,res){
+    if(req.session.user){
+        const id = req.body.id;
+        Task.delete({id: id}).then((result)=>{
+            res.json({status_code:200});
+        }).catch((error)=>{
+            res.json({status_code: 200, error: true});
+        })
+    }else res.redirect("/signin");
+});
+
+router.post("/tasks/update",function(req,res){
+    if(req.session.user){
+        const {description, name, content,id} = req.body;
+        const task = {
+            description: description,
+            name: name,
+            content: content
         }
-        // console.log(tasks);
-        var data={tasks:tasks,mp:mp};
-        res.render("blog/index",{data:data});
-    }).catch(function(error){
-        console.log(error);
-    })
+        Task.update([task,{id:id}]).then((result)=>{
+            res.json({status_code:200,id: result.id});
+        }).catch((error)=>{
+            res.json({status_code:200, error: true});
+        })
+       
+    }else res.redirect("/signin");
 });
 
-
-router.delete("/delete",function(req,res){
-    var id_task=req.body.id_task;
-    var data=task_md.deleteTask(id_task,email);
-    data.then(function(result){
-        res.json({status_code:200});
-    }).catch(function(error){
-        console.log(error);
-    })
+router.post("/tasks/add",function(req,res){
+    const user = req.session.user;
+    if(user){
+        const {description, name,content} = req.body;
+        const task = {
+            user_id: user.id,
+            description: description ? description:"",
+            name: name,
+            content: content,
+            status: 0
+        }
+        Task.add([task, {id:id}]).then((result)=>{
+            task.id = result.insertId;
+            res.json({status_code:200,task});
+        }).catch((error)=>{
+            res.json({status_code:200, error: true});
+        })
+       
+    }else res.redirect("/signin");
 });
 
-router.put("/edit/done",function(req,res){
-    var params=req.body;
-    var data=task_md.updateTaskDone(email,params);
-    data.then(function(result){
-        res.json({status_code:200});
-    }).catch(function(error){
-        console.log(error);
-    })
+router.post("/tasks/change_status",function(req,res){
+    if(req.session.user){
+        const {id, status} = req.body;
+        const task = {
+            status: status
+        }
+        Task.update([task, {id:id}]).then((result)=>{
+            res.json({status_code:200,id: result.id});
+        }).catch((error)=>{
+            res.json({status_code:200, error: true});
+        })
+       
+    }else res.redirect("/signin");
 });
 
-router.put("/edit/failure",function(req,res){
-    var params=req.body;
-    var data=task_md.updateTaskFailure(email,params);
-    data.then(function(result){
-        res.json({status_code:200});
-    }).catch(function(error){
-        console.log(error);
-    })
-});
-
-router.put("/edit/task",function(req,res){
-    var params=req.body;
-    var data=task_md.updateTask(email,params);
-    data.then(function(result){
-        res.json({status_code:200});
-    }).catch(function(error){
-        console.log(error);
-    })
-});
-
-router.post("/add/task",function(req,res){
-    var params=req.body;
-    params.id_task=++id_task;
-    console.log(params);
-    var data=task_md.addTask(email,params);
-    data.then(function(result){
-        res.json({status_code:200,id_task:id_task});
-    }).catch(function(error){
-        console.log(error);
-    })
-});
-
-router.put("/sortTasks",function(req,res){
-    var params=req.body.mp;
-    var data=task_md.updatePosition(email,params);
-    data.then(function(result){
-        res.json({status_code:200});
-    }).catch(function(error){
-        console.log(error);
-    })
-});
+router.put("/sort_tasks",function(req,res){
+    if(req.session.user){
+        var params=req.body.mp;
+        var data=task_md.updatePosition(email,params);
+        data.then(function(result){
+            res.json({status_code:200});
+        }).catch(function(error){
+        })
+    }else  res.redirect("/signin");
+})
 
 module.exports=router;
